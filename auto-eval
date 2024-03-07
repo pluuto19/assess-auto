@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+while getopts p: flag
+do
+   case $flag in
+      p) fPath=${OPTARG};;
+   esac
+done
+echo "$fPath"
+for rarFile in "$fPath/*.rar"
+do
+   echo $rarFile
+   unrar x $rarFile
+   cd $(echo rarFile | awk -F'.' '{print $1}')
+   gcc $(ls)
+   cd ..
+done
