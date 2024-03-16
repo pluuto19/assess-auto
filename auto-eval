@@ -5,12 +5,19 @@ do
       p) fPath=${OPTARG};;
    esac
 done
-echo "$fPath"
-for rarFile in "$fPath/*.rar"
+
+for rarFile in $(ls $fPath/*.rar)
 do
-   echo $rarFile
-   unrar x $rarFile
-   cd $(echo rarFile | awk -F'.' '{print $1}')
-   gcc $(ls)
+   dirName=$(echo $rarFile | awk -F'.' '{print $1}')
+   echo $dirName
+   echo "$rarFile"
+   mkdir $dirName && unrar e $rarFile $dirName -inul
+   cd $dirName
+#   gcc $(ls)
+   for cFile in $(ls)
+   do
+      gcc $cFile -o "$(echo $cFile | awk -F'.' '{print $1}').o"
+   done
+   ls
    cd ..
 done
