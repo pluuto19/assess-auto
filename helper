@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+# RUN THIS SCRIPT WITH SUDO
+
+shopt -s nullglob
+
+while getopts p: flag
+do
+   case $flag in
+      p) fPath=${OPTARG};;
+   esac
+done
+
+cd $fPath
+
+for file in *; do
+    if [[ $file == *" "* ]]; then
+        mv "$file" "${file// /_}"
+    fi
+done
+
+for rarFile in *.{rar,zip}
+do
+   dirName=$(echo $rarFile | awk -F'.' '{print $1}')
+   mkdir $dirName
+   
+   if [ $(echo $rarFile | awk -F'.' '{print $2}') == "rar" ]; then
+      unrar e $rarFile $dirName -inul
+   else
+      unzip -j -qq $rarFile -d $dirName
+   fi
+   
+   cd $dirName
+   
+   for srcFile in *; do
+      if [[ $srcFile == *" "* ]]; then
+        mv "$srcFile" "${srcFile// /_}"
+      fi
+   done
+   
+   for cFile in *.{c,cpp}
+   do
+      if [ $(echo $cFile | awk -F'.' '{print $2}') == "c" ]; then
+         gcc $cFile -o "$(echo $cFile | awk -F'.' '{print $1}').o"
+      else
+         g++ $cFile -o "$(echo $cFile | awk -F'.' '{print $1}').o"
+      fi
+   done
+   
+   cFiles=( *.{c,cpp} )
+   oFiles=( *.o )
+
+   ls *.{c,cpp}
+   echo $rarFile
+   echo "Specify the file to review and run (like 1 for file1, 2 for file2...)"
+   read fileNum && fileNum=$((fileNum-1))
+   xfce4-terminal --geometry 150x40+400+70 --hold -e "nano ./${cFiles[$fileNum]}" &
+   codeReviewId="$!"
+   xfce4-terminal --geometry 150x40+400+70 --hold -e "./${oFiles[$fileNum]}" &
+   programReviewId="$!"
+   wait "$programReviewId"
+   wait "$codeReviewId"
+   
+   cd ..
+   rm -rf $dirName
+   rm -rf $rarFile
+done
